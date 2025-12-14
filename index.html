@@ -422,20 +422,21 @@
             <div class="sidebar-left">
                 <div class="section">
                     <div class="section-title">📁 Importer</div>
-                    <label class="tool-btn" for="videoInput">
+                    
+                    <button class="tool-btn" onclick="document.getElementById('videoInput').click()">
                         🎥 Importer Vidéo
-                    </label>
-                    <input type="file" id="videoInput" class="file-input" accept="video/*" onchange="importVideo(this.files[0])">
+                    </button>
+                    <input type="file" id="videoInput" style="display: none;" accept="video/*" onchange="importVideo(this.files[0])">
                     
-                    <label class="tool-btn" for="audioInput">
+                    <button class="tool-btn" onclick="document.getElementById('audioInput').click()">
                         🎵 Importer Audio
-                    </label>
-                    <input type="file" id="audioInput" class="file-input" accept="audio/*" onchange="importAudio(this.files[0])">
+                    </button>
+                    <input type="file" id="audioInput" style="display: none;" accept="audio/*" onchange="importAudio(this.files[0])">
                     
-                    <label class="tool-btn" for="imageInput">
+                    <button class="tool-btn" onclick="document.getElementById('imageInput').click()">
                         🖼️ Importer Image
-                    </label>
-                    <input type="file" id="imageInput" class="file-input" accept="image/*" onchange="importImage(this.files[0])">
+                    </button>
+                    <input type="file" id="imageInput" style="display: none;" accept="image/*" onchange="importImage(this.files[0])">
                 </div>
 
                 <div class="section">
@@ -618,16 +619,34 @@
 
         // IMPORT MEDIA
         function importVideo(file) {
-            if (!file) return;
+            console.log('=== IMPORT VIDEO APPELÉ ===');
+            console.log('File:', file);
             
-            console.log('Import vidéo:', file.name);
+            if (!file) {
+                console.log('Pas de fichier sélectionné');
+                alert('Aucun fichier sélectionné');
+                return;
+            }
+            
+            console.log('Nom:', file.name);
+            console.log('Type:', file.type);
+            console.log('Taille:', file.size);
+            
+            alert('Fichier sélectionné: ' + file.name);
             showNotification('⏳ Chargement de la vidéo...');
             
             const url = URL.createObjectURL(file);
+            console.log('URL créée:', url);
+            
             const video = document.createElement('video');
             video.src = url;
+            video.preload = 'metadata';
             
             video.onloadedmetadata = () => {
+                console.log('Métadonnées chargées!');
+                console.log('Durée:', video.duration);
+                console.log('Dimensions:', video.videoWidth, 'x', video.videoHeight);
+                
                 const clip = {
                     id: clipIdCounter++,
                     type: 'video',
@@ -646,28 +665,43 @@
                     rotation: 0
                 };
                 
+                console.log('Clip créé:', clip);
                 project.clips.push(clip);
+                console.log('Nombre de clips:', project.clips.length);
+                
                 addClipToTimeline(clip);
                 updateProjectDuration();
                 render();
                 showNotification('✅ Vidéo importée : ' + file.name);
+                alert('Vidéo ajoutée à la timeline!');
             };
             
-            video.onerror = () => {
+            video.onerror = (e) => {
+                console.error('Erreur vidéo:', e);
                 showNotification('❌ Erreur lors du chargement de la vidéo');
+                alert('Erreur: Impossible de charger la vidéo');
             };
         }
 
         function importAudio(file) {
-            if (!file) return;
+            console.log('=== IMPORT AUDIO APPELÉ ===');
+            console.log('File:', file);
             
-            console.log('Import audio:', file.name);
+            if (!file) {
+                alert('Aucun fichier sélectionné');
+                return;
+            }
+            
+            alert('Audio sélectionné: ' + file.name);
             showNotification('⏳ Chargement de l\'audio...');
             
             const url = URL.createObjectURL(file);
             const audio = new Audio(url);
+            audio.preload = 'metadata';
             
             audio.onloadedmetadata = () => {
+                console.log('Audio chargé, durée:', audio.duration);
+                
                 const clip = {
                     id: clipIdCounter++,
                     type: 'audio',
@@ -685,17 +719,25 @@
                 addClipToTimeline(clip);
                 updateProjectDuration();
                 showNotification('✅ Audio importé : ' + file.name);
+                alert('Audio ajouté à la timeline!');
             };
             
-            audio.onerror = () => {
-                showNotification('❌ Erreur lors du chargement de l\'audio');
+            audio.onerror = (e) => {
+                console.error('Erreur audio:', e);
+                alert('Erreur: Impossible de charger l\'audio');
             };
         }
 
         function importImage(file) {
-            if (!file) return;
+            console.log('=== IMPORT IMAGE APPELÉ ===');
+            console.log('File:', file);
             
-            console.log('Import image:', file.name);
+            if (!file) {
+                alert('Aucun fichier sélectionné');
+                return;
+            }
+            
+            alert('Image sélectionnée: ' + file.name);
             showNotification('⏳ Chargement de l\'image...');
             
             const url = URL.createObjectURL(file);
@@ -703,6 +745,8 @@
             img.src = url;
             
             img.onload = () => {
+                console.log('Image chargée:', img.width, 'x', img.height);
+                
                 const clip = {
                     id: clipIdCounter++,
                     type: 'image',
@@ -723,15 +767,17 @@
                 updateProjectDuration();
                 render();
                 showNotification('✅ Image importée : ' + file.name);
+                alert('Image ajoutée à la timeline!');
             };
             
-            img.onerror = () => {
-                showNotification('❌ Erreur lors du chargement de l\'image');
+            img.onerror = (e) => {
+                console.error('Erreur image:', e);
+                alert('Erreur: Impossible de charger l\'image');
             };
         }
 
         function showNotification(message) {
-            // Créer une notification temporaire
+            console.log('Notification:', message);
             const notif = document.createElement('div');
             notif.style.cssText = `
                 position: fixed;
@@ -743,15 +789,13 @@
                 border-radius: 8px;
                 font-size: 14px;
                 z-index: 1000;
-                animation: slideIn 0.3s ease-out;
                 border: 1px solid #4a4a4a;
             `;
             notif.textContent = message;
             document.body.appendChild(notif);
             
             setTimeout(() => {
-                notif.style.animation = 'slideOut 0.3s ease-out';
-                setTimeout(() => notif.remove(), 300);
+                notif.remove();
             }, 3000);
         }
 
