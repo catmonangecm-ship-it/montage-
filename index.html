@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -121,26 +122,31 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 0;
             position: relative;
+            overflow: hidden;
         }
 
         #previewCanvas {
-            max-width: 100%;
-            max-height: 100%;
-            background: #1a1a1a;
-            border-radius: 5px;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #000;
         }
 
         .playback-controls {
             position: absolute;
-            bottom: 30px;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 15px 20px;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            padding: 15px 25px;
             border-radius: 30px;
             display: flex;
             gap: 15px;
             align-items: center;
+            z-index: 10;
+            backdrop-filter: blur(10px);
         }
 
         .play-btn {
@@ -746,6 +752,28 @@
 
         // RENDER
         function render() {
+            // S'assurer que le canvas prend toute la zone
+            const previewArea = document.querySelector('.preview-area');
+            const rect = previewArea.getBoundingClientRect();
+            
+            // Garder le ratio 16:9
+            const targetWidth = rect.width;
+            const targetHeight = rect.height - 80; // Moins l'espace pour les contrôles
+            const aspectRatio = 16 / 9;
+            
+            let canvasWidth, canvasHeight;
+            if (targetWidth / targetHeight > aspectRatio) {
+                canvasHeight = targetHeight;
+                canvasWidth = canvasHeight * aspectRatio;
+            } else {
+                canvasWidth = targetWidth;
+                canvasHeight = canvasWidth / aspectRatio;
+            }
+            
+            canvas.style.width = canvasWidth + 'px';
+            canvas.style.height = canvasHeight + 'px';
+            
+            // Render le contenu
             ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
@@ -785,6 +813,11 @@
                 ctx.restore();
             });
         }
+        
+        // Redimensionner le canvas quand la fenêtre change
+        window.addEventListener('resize', () => {
+            render();
+        });
 
         // TOOLS
         function addVisual(type) {
