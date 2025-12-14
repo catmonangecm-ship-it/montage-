@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Éditeur Vidéo YouTube Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .app {
+            display: grid;
+            grid-template-rows: 60px 1fr 250px;
+            height: 100vh;
+        }
+
+        /* HEADER */
+        .header {
+            background: #2a2a2a;
+            border-bottom: 1px solid #3a3a3a;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ff0000;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            background: #3a3a3a;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            background: #4a4a4a;
+        }
+
+        .btn-primary {
+            background: #ff0000;
+        }
+
+        .btn-primary:hover {
+            background: #cc0000;
+        }
+
+        /* MAIN AREA */
+        .main {
+            display: grid;
+            grid-template-columns: 250px 1fr 300px;
+            background: #1a1a1a;
+        }
+
+        /* SIDEBAR LEFT */
+        .sidebar-left {
+            background: #2a2a2a;
+            border-right: 1px solid #3a3a3a;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .tool-btn {
+            width: 100%;
+            padding: 12px;
+            background: #3a3a3a;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            margin-bottom: 8px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .tool-btn:hover {
+            background: #4a4a4a;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        /* PREVIEW AREA */
+        .preview-area {
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        #previewCanvas {
+            max-width: 100%;
+            max-height: 100%;
+            background: #1a1a1a;
+            border-radius: 5px;
+        }
+
+        .playback-controls {
+            position: absolute;
+            bottom: 30px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 20px;
+            border-radius: 30px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .play-btn {
+            width: 50px;
+            height: 50px;
+            background: #ff0000;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .time-display {
+            color: white;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        /* SIDEBAR RIGHT */
+        .sidebar-right {
+            background: #2a2a2a;
+            border-left: 1px solid #3a3a3a;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .property {
+            margin-bottom: 20px;
+        }
+
+        .property-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 5px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 8px;
+            background: #3a3a3a;
+            border: 1px solid #4a4a4a;
+            border-radius: 5px;
+            color: white;
+        }
+
+        /* TIMELINE */
+        .timeline {
+            background: #2a2a2a;
+            border-top: 1px solid #3a3a3a;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .timeline-header {
+            padding: 10px 20px;
+            background: #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .timeline-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .timeline-content {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+        }
+
+        .timeline-ruler {
+            height: 30px;
+            background: #2a2a2a;
+            border-bottom: 1px solid #3a3a3a;
+            position: relative;
+        }
+
+        .timeline-tracks {
+            min-height: 150px;
+        }
+
+        .track {
+            height: 60px;
+            border-bottom: 1px solid #3a3a3a;
+            position: relative;
+            padding: 5px;
+        }
+
+        .track-label {
+            position: absolute;
+            left: 10px;
+            top: 5px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .clip {
+            position: absolute;
+            height: 50px;
+            background: #4a90e2;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: move;
+            font-size: 12px;
+            overflow: hidden;
+            border: 2px solid transparent;
+        }
+
+        .clip:hover {
+            border-color: #fff;
+        }
+
+        .clip.selected {
+            border-color: #ff0000;
+        }
+
+        .clip-video {
+            background: #4a90e2;
+        }
+
+        .clip-audio {
+            background: #e24a90;
+        }
+
+        .clip-text {
+            background: #4ae290;
+        }
+
+        .playhead {
+            position: absolute;
+            width: 2px;
+            height: 100%;
+            background: #ff0000;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #2a2a2a;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #999;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 10px;
+            background: #3a3a3a;
+            border: 1px solid #4a4a4a;
+            border-radius: 5px;
+            color: white;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .color-picker {
+            width: 100%;
+            height: 40px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="logo">🎬 YouTube Video Editor</div>
+            <div class="header-actions">
+                <button class="btn" onclick="newProject()">📄 Nouveau</button>
+                <button class="btn" onclick="saveProject()">💾 Sauvegarder</button>
+                <button class="btn btn-primary" onclick="exportVideo()">📤 Exporter Vidéo</button>
+            </div>
+        </div>
+
+        <!-- MAIN -->
+        <div class="main">
+            <!-- SIDEBAR LEFT -->
+            <div class="sidebar-left">
+                <div class="section">
+                    <div class="section-title">📁 Importer</div>
+                    <label class="tool-btn">
+                        🎥 Importer Vidéo
+                        <input type="file" class="file-input" accept="video/*" onchange="importVideo(this.files[0])">
+                    </label>
+                    <label class="tool-btn">
+                        🎵 Importer Audio
+                        <input type="file" class="file-input" accept="audio/*" onchange="importAudio(this.files[0])">
+                    </label>
+                    <label class="tool-btn">
+                        🖼️ Importer Image
+                        <input type="file" class="file-input" accept="image/*" onchange="importImage(this.files[0])">
+                    </label>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">✂️ Outils</div>
+                    <button class="tool-btn" onclick="cutClip()">✂️ Couper</button>
+                    <button class="tool-btn" onclick="deleteClip()">🗑️ Supprimer</button>
+                    <button class="tool-btn" onclick="duplicateClip()">📋 Dupliquer</button>
+                    <button class="tool-btn" onclick="splitClip()">📐 Diviser</button>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">➕ Ajouter</div>
+                    <button class="tool-btn" onclick="addText()">📝 Texte</button>
+                    <button class="tool-btn" onclick="addTransition()">🔀 Transition</button>
+                    <button class="tool-btn" onclick="addMusic()">🎵 Musique</button>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">🎨 Effets</div>
+                    <button class="tool-btn" onclick="applyEffect('blur')">💫 Flou</button>
+                    <button class="tool-btn" onclick="applyEffect('grayscale')">⚫ N&B</button>
+                    <button class="tool-btn" onclick="applyEffect('brightness')">☀️ Luminosité</button>
+                    <button class="tool-btn" onclick="applyEffect('sepia')">🟤 Sépia</button>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">🎨 Visuels</div>
+                    <button class="tool-btn" onclick="addVisual('background1')">🌅 Fond Sunset</button>
+                    <button class="tool-btn" onclick="addVisual('background2')">🌌 Fond Galaxy</button>
+                    <button class="tool-btn" onclick="addVisual('background3')">🌊 Fond Ocean</button>
+                    <button class="tool-btn" onclick="addVisual('particles')">✨ Particules</button>
+                    <button class="tool-btn" onclick="addVisual('overlay')">📺 Overlay Tech</button>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">🎵 Musiques</div>
+                    <button class="tool-btn" onclick="addSound('epic')">🎸 Epic</button>
+                    <button class="tool-btn" onclick="addSound('chill')">🎹 Chill</button>
+                    <button class="tool-btn" onclick="addSound('upbeat')">🎺 Upbeat</button>
+                    <button class="tool-btn" onclick="addSound('ambient')">🎼 Ambient</button>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">🔊 Effets Sonores</div>
+                    <button class="tool-btn" onclick="addSFX('whoosh')">💨 Whoosh</button>
+                    <button class="tool-btn" onclick="addSFX('click')">🖱️ Click</button>
+                    <button class="tool-btn" onclick="addSFX('notification')">🔔 Notification</button>
+                    <button class="tool-btn" onclick="addSFX('success')">✅ Success</button>
+                </div>
+            </div>
+
+            <!-- PREVIEW -->
+            <div class="preview-area">
+                <canvas id="previewCanvas" width="1920" height="1080"></canvas>
+                <div class="playback-controls">
+                    <button class="play-btn" id="playBtn" onclick="togglePlay()">▶️</button>
+                    <span class="time-display" id="timeDisplay">00:00 / 00:00</span>
+                </div>
+            </div>
+
+            <!-- SIDEBAR RIGHT -->
+            <div class="sidebar-right">
+                <div class="section-title">⚙️ Propriétés</div>
+                
+                <div class="property">
+                    <div class="property-label">Volume</div>
+                    <input type="range" id="volumeSlider" min="0" max="100" value="100" oninput="updateVolume(this.value)">
+                    <span id="volumeValue">100%</span>
+                </div>
+
+                <div class="property">
+                    <div class="property-label">Vitesse</div>
+                    <select id="speedSelect" onchange="updateSpeed(this.value)">
+                        <option value="0.25">0.25x</option>
+                        <option value="0.5">0.5x</option>
+                        <option value="1" selected>1x</option>
+                        <option value="1.5">1.5x</option>
+                        <option value="2">2x</option>
+                    </select>
+                </div>
+
+                <div class="property">
+                    <div class="property-label">Opacité</div>
+                    <input type="range" id="opacitySlider" min="0" max="100" value="100" oninput="updateOpacity(this.value)">
+                    <span id="opacityValue">100%</span>
+                </div>
+
+                <div class="property">
+                    <div class="property-label">Position X</div>
+                    <input type="number" id="posX" value="0" oninput="updatePosition()">
+                </div>
+
+                <div class="property">
+                    <div class="property-label">Position Y</div>
+                    <input type="number" id="posY" value="0" oninput="updatePosition()">
+                </div>
+
+                <div class="property">
+                    <div class="property-label">Échelle</div>
+                    <input type="range" id="scaleSlider" min="10" max="200" value="100" oninput="updateScale(this.value)">
+                    <span id="scaleValue">100%</span>
+                </div>
+
+                <div class="property">
+                    <div class="property-label">Rotation</div>
+                    <input type="range" id="rotationSlider" min="0" max="360" value="0" oninput="updateRotation(this.value)">
+                    <span id="rotationValue">0°</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- TIMELINE -->
+        <div class="timeline">
+            <div class="timeline-header">
+                <span style="font-weight: bold;">Timeline</span>
+                <div class="timeline-controls">
+                    <div class="zoom-controls">
+                        <button class="btn" onclick="zoomOut()">🔍-</button>
+                        <button class="btn" onclick="zoomIn()">🔍+</button>
+                    </div>
+                    <button class="btn" onclick="addTrack()">➕ Piste</button>
+                </div>
+            </div>
+            <div class="timeline-content" id="timelineContent">
+                <div class="timeline-ruler" id="timelineRuler"></div>
+                <div class="playhead" id="playhead"></div>
+                <div class="timeline-tracks" id="timelineTracks">
+                    <div class="track" data-track="0">
+                        <span class="track-label">Vidéo 1</span>
+                    </div>
+                    <div class="track" data-track="1">
+                        <span class="track-label">Audio 1</span>
+                    </div>
+                    <div class="track" data-track="2">
+                        <span class="track-label">Texte 1</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TEXTE -->
+    <div class="modal" id="textModal">
+        <div class="modal-content">
+            <h2 class="modal-title">Ajouter du texte</h2>
+            <div class="form-group">
+                <label class="form-label">Texte</label>
+                <textarea id="textContent" placeholder="Votre texte ici..."></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Taille de police</label>
+                <input type="number" id="fontSize" value="48" min="10" max="200">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Couleur</label>
+                <input type="color" class="color-picker" id="textColor" value="#ffffff">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="confirmAddText()">Ajouter</button>
+                <button class="btn" onclick="closeModal()">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('previewCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let project = {
+            clips: [],
+            currentTime: 0,
+            duration: 0,
+            isPlaying: false,
+            selectedClip: null,
+            zoom: 1,
+            tracks: 3
+        };
+
+        let clipIdCounter = 0;
+
+        // IMPORT MEDIA
+        function importVideo(file) {
+            if (!file) return;
+            
+            const url = URL.createObjectURL(file);
+            const video = document.createElement('video');
+            video.src = url;
+            
+            video.onloadedmetadata = () => {
+                const clip = {
+                    id: clipIdCounter++,
+                    type: 'video',
+                    source: video,
+                    url: url,
+                    name: file.name,
+                    start: 0,
+                    duration: video.duration,
+                    track: 0,
+                    effects: {},
+                    volume: 1,
+                    speed: 1,
+                    opacity: 1,
+                    position: {x: 0, y: 0},
+                    scale: 1,
+                    rotation: 0
+                };
+                
+                project.clips.push(clip);
+                addClipToTimeline(clip);
+                updateProjectDuration();
+                render();
+            };
+        }
+
+        function importAudio(file) {
+            if (!file) return;
+            
+            const url = URL.createObjectURL(file);
+            const audio = new Audio(url);
+            
+            audio.onloadedmetadata = () => {
+                const clip = {
+                    id: clipIdCounter++,
+                    type: 'audio',
+                    source: audio,
+                    url: url,
+                    name: file.name,
+                    start: 0,
+                    duration: audio.duration,
+                    track: 1,
+                    volume: 1,
+                    speed: 1
+                };
+                
+                project.clips.push(clip);
+                addClipToTimeline(clip);
+                updateProjectDuration();
+            };
+        }
+
+        function importImage(file) {
+            if (!file) return;
+            
+            const url = URL.createObjectURL(file);
+            const img = new Image();
+            img.src = url;
+            
+            img.onload = () => {
+                const clip = {
+                    id: clipIdCounter++,
+                    type: 'image',
+                    source: img,
+                    url: url,
+                    name: file.name,
+                    start: 0,
+                    duration: 5,
+                    track: 0,
+                    opacity: 1,
+                    position: {x: 0, y: 0},
+                    scale: 1,
+                    rotation: 0
+                };
+                
+                project.clips.push(clip);
+                addClipToTimeline(clip);
+                updateProjectDuration();
+                render();
+            };
+        }
+
+        // TIMELINE
+        function addClipToTimeline(clip) {
+            const track = document.querySelector(`[data-track="${clip.track}"]`);
+            if (!track) return;
+            
+            const clipEl = document.createElement('div');
+            clipEl.className = `clip clip-${clip.type}`;
+            clipEl.dataset.clipId = clip.id;
+            clipEl.style.left = (clip.start * 100 * project.zoom) + 'px';
+            clipEl.style.width = (clip.duration * 100 * project.zoom) + 'px';
+            clipEl.textContent = clip.name;
+            
+            clipEl.onclick = () => selectClip(clip.id);
+            
+            // Drag & drop
+            clipEl.draggable = true;
+            clipEl.ondragstart = (e) => {
+                e.dataTransfer.setData('clipId', clip.id);
+            };
+            
+            track.appendChild(clipEl);
+        }
+
+        function selectClip(clipId) {
+            document.querySelectorAll('.clip').forEach(el => el.classList.remove('selected'));
+            document.querySelector(`[data-clip-id="${clipId}"]`)?.classList.add('selected');
+            
+            project.selectedClip = project.clips.find(c => c.id === clipId);
+            updateProperties();
+        }
+
+        function updateProperties() {
+            if (!project.selectedClip) return;
+            
+            const clip = project.selectedClip;
+            document.getElementById('volumeSlider').value = (clip.volume || 1) * 100;
+            document.getElementById('volumeValue').textContent = Math.round((clip.volume || 1) * 100) + '%';
+            document.getElementById('speedSelect').value = clip.speed || 1;
+            document.getElementById('opacitySlider').value = (clip.opacity || 1) * 100;
+            document.getElementById('opacityValue').textContent = Math.round((clip.opacity || 1) * 100) + '%';
+            document.getElementById('scaleSlider').value = (clip.scale || 1) * 100;
+            document.getElementById('scaleValue').textContent = Math.round((clip.scale || 1) * 100) + '%';
+            document.getElementById('rotationSlider').value = clip.rotation || 0;
+            document.getElementById('rotationValue').textContent = (clip.rotation || 0) + '°';
+        }
+
+        // PLAYBACK
+        function togglePlay() {
+            project.isPlaying = !project.isPlaying;
+            document.getElementById('playBtn').textContent = project.isPlaying ? '⏸️' : '▶️';
+            
+            if (project.isPlaying) {
+                playLoop();
+            }
+        }
+
+        function playLoop() {
+            if (!project.isPlaying) return;
+            
+            project.currentTime += 1/30;
+            if (project.currentTime >= project.duration) {
+                project.currentTime = 0;
+            }
+            
+            updatePlayhead();
+            render();
+            updateTimeDisplay();
+            
+            requestAnimationFrame(playLoop);
+        }
+
+        function updatePlayhead() {
+            const playhead = document.getElementById('playhead');
+            playhead.style.left = (project.currentTime * 100 * project.zoom) + 'px';
+        }
+
+        function updateTimeDisplay() {
+            const current = formatTime(project.currentTime);
+            const total = formatTime(project.duration);
+            document.getElementById('timeDisplay').textContent = `${current} / ${total}`;
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        // RENDER
+        function render() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const activeClips = project.clips.filter(clip => 
+                project.currentTime >= clip.start && 
+                project.currentTime < clip.start + clip.duration
+            );
+            
+            activeClips.forEach(clip => {
+                ctx.save();
+                
+                ctx.globalAlpha = clip.opacity || 1;
+                
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                
+                ctx.translate(centerX, centerY);
+                ctx.rotate((clip.rotation || 0) * Math.PI / 180);
+                ctx.scale(clip.scale || 1, clip.scale || 1);
+                ctx.translate(-centerX + (clip.position?.x || 0), -centerY + (clip.position?.y || 0));
+                
+                if (clip.type === 'video' || clip.type === 'image') {
+                    const localTime = project.currentTime - clip.start;
+                    if (clip.type === 'video') {
+                        clip.source.currentTime = localTime * (clip.speed || 1);
+                    }
+                    ctx.drawImage(clip.source, 0, 0, canvas.width, canvas.height);
+                }
+                
+                if (clip.type === 'text') {
+                    ctx.font = `${clip.fontSize || 48}px Arial`;
+                    ctx.fillStyle = clip.color || '#ffffff';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(clip.text, canvas.width / 2, canvas.height / 2);
+                }
+                
+                ctx.restore();
+            });
+        }
+
+        // TOOLS
+        function addVisual(type) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1920;
+            canvas.height = 1080;
+            const ctx = canvas.getContext('2d');
+            
+            // Générer le visuel
+            switch(type) {
+                case 'background1': // Sunset
+                    const grad1 = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                    grad1.addColorStop(0, '#ff6b35');
+                    grad1.addColorStop(0.5, '#f7931e');
+                    grad1.addColorStop(1, '#fdc830');
+                    ctx.fillStyle = grad1;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Soleil
+                    ctx.fillStyle = '#ffd700';
+                    ctx.beginPath();
+                    ctx.arc(canvas.width / 2, canvas.height / 3, 150, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+                    
+                case 'background2': // Galaxy
+                    const grad2 = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 0, canvas.width/2, canvas.height/2, canvas.height);
+                    grad2.addColorStop(0, '#1e3a8a');
+                    grad2.addColorStop(0.5, '#312e81');
+                    grad2.addColorStop(1, '#1a1a2e');
+                    ctx.fillStyle = grad2;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Étoiles
+                    ctx.fillStyle = '#fff';
+                    for (let i = 0; i < 200; i++) {
+                        const x = Math.random() * canvas.width;
+                        const y = Math.random() * canvas.height;
+                        const size = Math.random() * 3;
+                        ctx.fillRect(x, y, size, size);
+                    }
+                    break;
+                    
+                case 'background3': // Ocean
+                    const grad3 = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                    grad3.addColorStop(0, '#0ea5e9');
+                    grad3.addColorStop(0.5, '#0284c7');
+                    grad3.addColorStop(1, '#0c4a6e');
+                    ctx.fillStyle = grad3;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Vagues
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.lineWidth = 5;
+                    for (let y = 0; y < canvas.height; y += 100) {
+                        ctx.beginPath();
+                        for (let x = 0; x <= canvas.width; x += 10) {
+                            const wave = Math.sin(x * 0.01) * 30;
+                            if (x === 0) ctx.moveTo(x, y + wave);
+                            else ctx.lineTo(x, y + wave);
+                        }
+                        ctx.stroke();
+                    }
+                    break;
+                    
+                case 'particles':
+                    ctx.fillStyle = 'transparent';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Particules dorées
+                    for (let i = 0; i < 100; i++) {
+                        const x = Math.random() * canvas.width;
+                        const y = Math.random() * canvas.height;
+                        const size = Math.random() * 10 + 5;
+                        const grad = ctx.createRadialGradient(x, y, 0, x, y, size);
+                        grad.addColorStop(0, 'rgba(255, 215, 0, 0.8)');
+                        grad.addColorStop(1, 'rgba(255, 215, 0, 0)');
+                        ctx.fillStyle = grad;
+                        ctx.beginPath();
+                        ctx.arc(x, y, size, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    break;
+                    
+                case 'overlay':
+                    ctx.fillStyle = 'transparent';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Cadre tech
+                    ctx.strokeStyle = '#00ffff';
+                    ctx.lineWidth = 10;
+                    ctx.strokeRect(50, 50, canvas.width - 100, canvas.height - 100);
+                    
+                    // Coins
+                    ctx.fillStyle = '#00ffff';
+                    ctx.fillRect(40, 40, 80, 10);
+                    ctx.fillRect(40, 40, 10, 80);
+                    ctx.fillRect(canvas.width - 120, 40, 80, 10);
+                    ctx.fillRect(canvas.width - 50, 40, 10, 80);
+                    ctx.fillRect(40, canvas.height - 50, 80, 10);
+                    ctx.fillRect(40, canvas.height - 120, 10, 80);
+                    ctx.fillRect(canvas.width - 120, canvas.height - 50, 80, 10);
+                    ctx.fillRect(canvas.width - 50, canvas.height - 120, 10, 80);
+                    break;
+            }
+            
+            // Convertir en image
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const img = new Image();
+                img.src = url;
+                
+                img.onload = () => {
+                    const clip = {
+                        id: clipIdCounter++,
+                        type: 'image',
+                        source: img,
+                        url: url,
+                        name: 'Visuel ' + type,
+                        start: project.currentTime,
+                        duration: 10,
+                        track: 0,
+                        opacity: type === 'particles' || type === 'overlay' ? 0.8 : 1,
+                        position: {x: 0, y: 0},
+                        scale: 1,
+                        rotation: 0
+                    };
+                    
+                    project.clips.push(clip);
+                    addClipToTimeline(clip);
+                    updateProjectDuration();
+                    render();
+                };
+            });
+        }
+
+        function addSound(type) {
+            // Générer un son synthétique avec Web Audio API
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const duration = 30; // 30 secondes
+            const sampleRate = audioContext.sampleRate;
+            const buffer = audioContext.createBuffer(2, duration * sampleRate, sampleRate);
+            
+            for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+                const data = buffer.getChannelData(channel);
+                
+                for (let i = 0; i < data.length; i++) {
+                    const t = i / sampleRate;
+                    
+                    switch(type) {
+                        case 'epic':
+                            // Basse puissante + mélodie
+                            data[i] = Math.sin(2 * Math.PI * 110 * t) * 0.3 + 
+                                     Math.sin(2 * Math.PI * 220 * t * Math.sin(t * 0.5)) * 0.2;
+                            break;
+                        case 'chill':
+                            // Sons doux et harmonieux
+                            data[i] = Math.sin(2 * Math.PI * 261.63 * t) * 0.1 + 
+                                     Math.sin(2 * Math.PI * 329.63 * t) * 0.1 +
+                                     Math.sin(2 * Math.PI * 392 * t) * 0.1;
+                            break;
+                        case 'upbeat':
+                            // Rythme rapide
+                            const beat = Math.floor(t * 4) % 2;
+                            data[i] = Math.sin(2 * Math.PI * 440 * t) * 0.2 * beat +
+                                     Math.sin(2 * Math.PI * 880 * t) * 0.1;
+                            break;
+                        case 'ambient':
+                            // Nappes atmosphériques
+                            data[i] = Math.sin(2 * Math.PI * 196 * t) * 0.15 +
+                                     Math.sin(2 * Math.PI * 196 * 1.5 * t) * 0.1 +
+                                     Math.random() * 0.02;
+                            break;
+                    }
+                    
+                    // Fade in/out
+                    if (i < sampleRate * 2) {
+                        data[i] *= i / (sampleRate * 2);
+                    } else if (i > data.length - sampleRate * 2) {
+                        data[i] *= (data.length - i) / (sampleRate * 2);
+                    }
+                }
+            }
+            
+            // Créer un élément audio depuis le buffer
+            const source = audioContext.createBufferSource();
+            source.buffer = buffer;
+            
+            // Créer un audio element
+            const audio = new Audio();
+            const dest = audioContext.createMediaStreamDestination();
+            source.connect(dest);
+            
+            const mediaRecorder = new MediaRecorder(dest.stream);
+            const chunks = [];
+            
+            mediaRecorder.ondataavailable = e => chunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(chunks, { type: 'audio/webm' });
+                const url = URL.createObjectURL(blob);
+                const audio = new Audio(url);
+                
+                audio.onloadedmetadata = () => {
+                    const clip = {
+                        id: clipIdCounter++,
+                        type: 'audio',
+                        source: audio,
+                        url: url,
+                        name: 'Musique ' + type,
+                        start: project.currentTime,
+                        duration: duration,
+                        track: 1,
+                        volume: 0.7,
+                        speed: 1
+                    };
+                    
+                    project.clips.push(clip);
+                    addClipToTimeline(clip);
+                    updateProjectDuration();
+                };
+            };
+            
+            mediaRecorder.start();
+            source.start();
+            setTimeout(() => {
+                source.stop();
+                mediaRecorder.stop();
+            }, duration * 1000);
+        }
+
+        function addSFX(type) {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const duration = type === 'whoosh' ? 1 : 0.5;
+            const sampleRate = audioContext.sampleRate;
+            const buffer = audioContext.createBuffer(2, duration * sampleRate, sampleRate);
+            
+            for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+                const data = buffer.getChannelData(channel);
+                
+                for (let i = 0; i < data.length; i++) {
+                    const t = i / sampleRate;
+                    const decay = 1 - (t / duration);
+                    
+                    switch(type) {
+                        case 'whoosh':
+                            data[i] = (Math.random() - 0.5) * decay * (1 - t);
+                            break;
+                        case 'click':
+                            data[i] = Math.sin(2 * Math.PI * 1000 * t) * decay * 10;
+                            break;
+                        case 'notification':
+                            data[i] = Math.sin(2 * Math.PI * 800 * t) * decay +
+                                     Math.sin(2 * Math.PI * 1000 * t) * decay * 0.5;
+                            break;
+                        case 'success':
+                            const freq = 523.25 + (t * 1000);
+                            data[i] = Math.sin(2 * Math.PI * freq * t) * decay;
+                            break;
+                    }
+                }
+            }
+            
+            const source = audioContext.createBufferSource();
+            source.buffer = buffer;
+            const dest = audioContext.createMediaStreamDestination();
+            source.connect(dest);
+            
+            const mediaRecorder = new MediaRecorder(dest.stream);
+            const chunks = [];
+            
+            mediaRecorder.ondataavailable = e => chunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(chunks, { type: 'audio/webm' });
+                const url = URL.createObjectURL(blob);
+                const audio = new Audio(url);
+                
+                audio.onloadedmetadata = () => {
+                    const clip = {
+                        id: clipIdCounter++,
+                        type: 'audio',
+                        source: audio,
+                        url: url,
+                        name: 'SFX ' + type,
+                        start: project.currentTime,
+                        duration: duration,
+                        track: 1,
+                        volume: 0.8,
+                        speed: 1
+                    };
+                    
+                    project.clips.push(clip);
+                    addClipToTimeline(clip);
+                    updateProjectDuration();
+                };
+            };
+            
+            mediaRecorder.start();
+            source.start();
+            setTimeout(() => {
+                source.stop();
+                mediaRecorder.stop();
+            }, duration * 1000);
+        }
+
+        function cutClip() {
+            if (!project.selectedClip) {
+                alert('Sélectionne un clip d\'abord');
+                return;
+            }
+            alert('Fonction coupe à implémenter');
+        }
+
+        function deleteClip() {
+            if (!project.selectedClip) {
+                alert('Sélectionne un clip d\'abord');
+                return;
+            }
+            
+            project.clips = project.clips.filter(c => c.id !== project.selectedClip.id);
+            document.querySelector(`[data-clip-id="${project.selectedClip.id}"]`)?.remove();
+            project.selectedClip = null;
+            updateProjectDuration();
+            render();
+        }
+
+        function duplicateClip() {
+            if (!project.selectedClip) {
+                alert('Sélectionne un clip d\'abord');
+                return;
+            }
+            
+            const newClip = JSON.parse(JSON.stringify(project.selectedClip));
+            newClip.id = clipIdCounter++;
+            newClip.start = project.selectedClip.start + project.selectedClip.duration;
+            
+            project.clips.push(newClip);
+            addClipToTimeline(newClip);
+            updateProjectDuration();
+        }
+
+        function addText() {
+            document.getElementById('textModal').classList.add('show');
+        }
+
+        function confirmAddText() {
+            const text = document.getElementById('textContent').value;
+            const fontSize = parseInt(document.getElementById('fontSize').value);
+            const color = document.getElementById('textColor').value;
+            
+            if (!text) {
+                alert('Entre du texte');
+                return;
+            }
+            
+            const clip = {
+                id: clipIdCounter++,
+                type: 'text',
+                text: text,
+                fontSize: fontSize,
+                color: color,
+                start: project.currentTime,
+                duration: 5,
+                track: 2,
+                opacity: 1,
+                position: {x: 0, y: 0}
+            };
+            
+            project.clips.push(clip);
+            addClipToTimeline(clip);
+            updateProjectDuration();
+            closeModal();
+            render();
+        }
+
+        function closeModal() {
+            document.getElementById('textModal').classList.remove('show');
+        }
+
+        function addTransition() {
+            alert('Transitions à venir');
+        }
+
+        function addMusic() {
+            alert('Clique sur "Importer Audio"');
+        }
+
+        function applyEffect(effect) {
+            if (!project.selectedClip) {
+                alert('Sélectionne un clip d\'abord');
+                return;
+            }
+            alert(`Effet ${effect} à implémenter`);
+        }
+
+        // PROPERTIES
+        function updateVolume(value) {
+            document.getElementById('volumeValue').textContent = value + '%';
+            if (project.selectedClip) {
+                project.selectedClip.volume = value / 100;
+            }
+        }
+
+        function updateSpeed(value) {
+            if (project.selectedClip) {
+                project.selectedClip.speed = parseFloat(value);
+            }
+        }
+
+        function updateOpacity(value) {
+            document.getElementById('opacityValue').textContent = value + '%';
+            if (project.selectedClip) {
+                project.selectedClip.opacity = value / 100;
+                render();
+            }
+        }
+
+        function updatePosition() {
+            if (!project.selectedClip) return;
+            project.selectedClip.position = {
+                x: parseInt(document.getElementById('posX').value) || 0,
+                y: parseInt(document.getElementById('posY').value) || 0
+            };
+            render();
+        }
+
+        function updateScale(value) {
+            document.getElementById('scaleValue').textContent = value + '%';
+            if (project.selectedClip) {
+                project.selectedClip.scale = value / 100;
+                render();
+            }
+        }
+
+        function updateRotation(value) {
+            document.getElementById('rotationValue').textContent = value + '°';
+            if (project.selectedClip) {
+                project.selectedClip.rotation = parseInt(value);
+                render();
+            }
+        }
+
+        // ZOOM
+        function zoomIn() {
+            project.zoom = Math.min(project.zoom * 1.5, 5);
+            refreshTimeline();
+        }
+
+        function zoomOut() {
+            project.zoom = Math.max(project.zoom / 1.5, 0.2);
+            refreshTimeline();
+        }
+
+        function refreshTimeline() {
+            document.querySelectorAll('.clip').forEach(el => el.remove());
+            project.clips.forEach(clip => addClipToTimeline(clip));
+        }
+
+        function addTrack() {
+            const tracks = document.getElementById('timelineTracks');
+            const trackNum = project.tracks++;
+            const track = document.createElement('div');
+            track.className = 'track';
+            track.dataset.track = trackNum;
+            track.innerHTML = `<span class="track-label">Piste ${trackNum + 1}</span>`;
+            tracks.appendChild(track);
+        }
+
+        function updateProjectDuration() {
+            project.duration = Math.max(...project.clips.map(c => c.start + c.duration), 10);
+            updateTimeDisplay();
+        }
+
+        // PROJECT
+        function newProject() {
+            if (confirm('Créer un nouveau projet ?')) {
+                project = {
+                    clips: [],
+                    currentTime: 0,
+                    duration: 0,
+                    isPlaying: false,
+                    selectedClip: null,
+                    zoom: 1,
+                    tracks: 3
+                };
+                document.querySelectorAll('.clip').forEach(el => el.remove());
+                render();
+            }
+        }
+
+        function saveProject() {
+            const json = JSON.stringify(project, (key, value) => {
+                if (key === 'source') return undefined;
+                return value;
+            });
+            
+            const blob = new Blob([json], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'projet_' + Date.now() + '.json';
+            a.click();
+        }
+
+        async function exportVideo() {
+            if (project.clips.length === 0) {
+                alert('Ajoute des clips d\'abord');
+                return;
+            }
+            
+            const confirmed = confirm('Exporter la vidéo ? (cela peut prendre du temps)');
+            if (!confirmed) return;
+            
+            // Enregistrement
+            const stream = canvas.captureStream(30);
+            const recorder = new MediaRecorder(stream, {
+                mimeType: 'video/webm;codecs=vp9',
+                videoBitsPerSecond: 8000000
+            });
+            
+            const chunks = [];
+            recorder.ondataavailable = e => chunks.push(e.data);
+            recorder.onstop = () => {
+                const blob = new Blob(chunks, {type: 'video/webm'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'video_youtube_' + Date.now() + '.webm';
+                a.click();
+                alert('Vidéo exportée !');
+            };
+            
+            recorder.start();
+            
+            // Render complet
+            const originalTime = project.currentTime;
+            project.currentTime = 0;
+            
+            while (project.currentTime < project.duration) {
+                render();
+                await new Promise(resolve => setTimeout(resolve, 33));
+                project.currentTime += 1/30;
+            }
+            
+            recorder.stop();
+            project.currentTime = originalTime;
+            render();
+        }
+
+        // Init
+        render();
+        updateTimeDisplay();
+    </script>
+</body>
+</html>
